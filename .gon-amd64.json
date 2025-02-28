@@ -1,0 +1,13 @@
+{
+  "source": ["./dist/macos-amd64_darwin_amd64_v1/baton-zoho-people"],
+  "bundle_id": "com.conductorone.baton-zoho-people",
+  "apple_id": {
+    "username" : "justin.gallardo@conductorone.com"
+  },
+  "sign": {
+    "application_identity": "Developer ID Application: Justin Gallardo (858DKH55XL)"
+  },
+  "zip" :{
+    "output_path":  "./dist/baton-zoho-people-darwin-amd64.signed.zip"
+  }
+}
