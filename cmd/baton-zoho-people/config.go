@@ -6,10 +6,31 @@ import (
 )
 
 var (
+	clientIDField = field.StringField(
+		"zoho-client-id",
+		field.WithRequired(true),
+		field.WithDescription("Client ID of the Self Client Application for Zoho."),
+	)
+	secretIDField = field.StringField(
+		"zoho-secret-id",
+		field.WithRequired(true),
+		field.WithDescription("Secret ID of the Self Client Application for Zoho."),
+	)
+	codeField = field.StringField(
+		"zoho-code",
+		field.WithRequired(true),
+		field.WithDescription("The temporary authorization code to access Zoho APIs."),
+	)
+	domainAccount = field.SelectField(
+		"domain-account",
+		[]string{"US", "AU", "EU", "IN", "CN"},
+		field.WithDescription("The domain specific account to get the access token."),
+		field.WithDefaultValue("US"),
+	)
 	// ConfigurationFields defines the external configuration required for the
 	// connector to run. Note: these fields can be marked as optional or
 	// required.
-	ConfigurationFields = []field.SchemaField{}
+	ConfigurationFields = []field.SchemaField{clientIDField, secretIDField, codeField, domainAccount}
 
 	// FieldRelationships defines relationships between the fields listed in
 	// ConfigurationFields that can be automatically validated. For example, a

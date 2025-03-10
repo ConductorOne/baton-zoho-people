@@ -7,14 +7,27 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
+	"github.com/conductorone/baton-zoho-people/pkg/client"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 )
 
-type Connector struct{}
+type Connector struct {
+	client *client.ZohoPeopleClient
+}
+
+type Option func(*Connector) error
+
+func (d *Connector) SetTokenSource(tokenSource oauth2.TokenSource) {
+	d.client.TokenSource = tokenSource
+}
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
-		newUserBuilder(),
+		newUserBuilder(d.client),
+		newDepartmentBuilder(d.client),
 	}
 }
 
@@ -39,6 +52,16 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context) (*Connector, error) {
-	return &Connector{}, nil
+func New(ctx context.Context, zohoClientID, zohoSecretID, zohoCode, domainAccount string) (*Connector, error) {
+	l := ctxzap.Extract(ctx)
+
+	zohoPeopleClient, err := client.New(ctx, zohoClientID, zohoSecretID, zohoCode, domainAccount)
+	if err != nil {
+		l.Error("error creating Zoho People client", zap.Error(err))
+		return nil, err
+	}
+
+	return &Connector{
+		client: zohoPeopleClient,
+	}, nil
 }
