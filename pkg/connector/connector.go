@@ -27,7 +27,7 @@ func (d *Connector) SetTokenSource(tokenSource oauth2.TokenSource) {
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
 		newUserBuilder(d.client),
-		newDepartmentBuilder(d.client),
+		newRoleBuilder(d.client),
 	}
 }
 

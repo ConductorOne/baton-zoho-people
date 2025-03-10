@@ -82,16 +82,16 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 
 	for _, employee := range employees {
 		if employee.Role != "" {
-			departmentResource := &v2.Resource{
+			roleResource := &v2.Resource{
 				Id: &v2.ResourceId{
-					ResourceType: departmentResourceType.Id,
-					Resource:     employee.DepartmentID,
+					ResourceType: roleResourceType.Id,
+					Resource:     employee.RoleID,
 				},
 			}
 			employeeCopy := employee
 			userResource, _ := parseIntoUserResource(&employeeCopy, userID)
-			userGrant := grant.NewGrant(departmentResource, employee.Role, userResource, grant.WithAnnotation(&v2.V1Identifier{
-				Id: fmt.Sprintf("department-grant:%s:%s:%s", departmentResource.Id.Resource, userID, employee.Role),
+			userGrant := grant.NewGrant(roleResource, "assigned", userResource, grant.WithAnnotation(&v2.V1Identifier{
+				Id: fmt.Sprintf("role-grant:%s:%s:%s", roleResource.Id.Resource, userID, "assigned"),
 			}))
 			grants = append(grants, userGrant)
 		}
