@@ -55,7 +55,12 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 func New(ctx context.Context, zohoClientID, zohoSecretID, zohoCode, domainAccount string) (*Connector, error) {
 	l := ctxzap.Extract(ctx)
 
-	zohoPeopleClient, err := client.New(ctx, zohoClientID, zohoSecretID, zohoCode, domainAccount)
+	zohoPeopleClient, err := client.New(ctx, client.ZohoAuthData{
+		ClientID:      zohoClientID,
+		ClientSecret:  zohoSecretID,
+		ClientCode:    zohoCode,
+		DomainAccount: domainAccount,
+	})
 	if err != nil {
 		l.Error("error creating Zoho People client", zap.Error(err))
 		return nil, err

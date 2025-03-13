@@ -1,0 +1,206 @@
+{
+  "response": {
+    "result": [
+      {
+        "100000000000": [
+          {
+            "Middle_Name": "John",
+            "EmailID": "christopherbrown@zylker.com",
+            "CreatedTime": "1740682258538",
+            "Employee_type.id": "858578000000039959",
+            "Date_of_birth": "02-Feb-1987",
+            "AddedTime": "27-Feb-2025 15:50:58",
+            "Photo": "https://people.zoho.com/api/viewEmployeePhoto?filename=example1",
+            "Marital_status": "Married",
+            "Gender": "Others",
+            "ModifiedBy": "adminUser",
+            "ApprovalStatus": "Approval Not Enabled",
+            "Department": "Management",
+            "LocationName.ID": "",
+            "tabularSections": {
+              "Education Details": [
+                {
+                  "Specialization": "Sales Engineering",
+                  "Degree": "Masters",
+                  "College": "Serenity University",
+                  "Yearofgraduation": "",
+                  "tabular.ROWID": "858578000000277339"
+                }
+              ],
+              "Work experience": [
+                {
+                  "Jobtitle": "Administration",
+                  "Employer": "Electronic Smarts",
+                  "RELEVANCE": "Yes",
+                  "Previous_JobDesc": "",
+                  "FromDate": "01-Feb-2007",
+                  "Todate": "05-Dec-2014",
+                  "tabular.ROWID": "858578000000277390",
+                  "RELEVANCE.id": "858578000000202025"
+                }
+              ],
+              "Dependent Details": [
+                {}
+              ]
+            },
+            "AddedBy": "adminUser",
+            "Mobile.country_code": "",
+            "Tags": "",
+            "Reporting_To": "adminUser",
+            "Photo_downloadUrl": "https://people.zoho.com/api/viewEmployeePhoto?filename=example1",
+            "Source_of_hire.id": "858578000000039977",
+            "total_experience.displayValue": "18 year(s)",
+            "Citizenship": "UNITED STATES",
+            "Employeestatus": "Active",
+            "Role": "Team Incharge",
+            "Experience": "10",
+            "Employee_type": "Permanent",
+            "AddedBy.ID": "858578000000275005",
+            "Social_Security_Number": "440-84-8201",
+            "Role.ID": "858578000000035647",
+            "LastName": "Brown",
+            "EmployeeID": "S20",
+            "ZUID": "-1",
+            "Veteran_Status": "",
+            "Dateofexit": "",
+            "Permanent_Address": "",
+            "Other_Email": "",
+            "LocationName": "",
+            "Work_location": "FL_ADMIN_4",
+            "Present_Address": "360 NW,98th St,Miami,Florida,UNITED STATES,33150",
+            "Nick_Name": "Chris",
+            "total_experience": "216",
+            "ModifiedTime": "1740690352812",
+            "Reporting_To.MailID": "admin@example.com",
+            "Zoho_ID": 100000000000,
+            "Designation.ID": "858578000000277166",
+            "Source_of_hire": "Referral",
+            "Designation": "Administration",
+            "Ethnicity.id": "858578000000275555",
+            "Marital_status.id": "858578000000039987",
+            "FirstName": "Christopher",
+            "AboutMe": "",
+            "Dateofjoining": "05-Jan-2015",
+            "Experience.displayValue": "10 year(s) 2 month(s)",
+            "Mobile": "239-222-4633",
+            "Extension": "5",
+            "ModifiedBy.ID": "858578000000275005",
+            "Ethnicity": "Two or more races",
+            "Reporting_To.ID": "858578000000275005",
+            "Work_phone": "727-555-5656",
+            "Employeestatus.type": 1,
+            "Department.ID": "858578000000277092",
+            "Present_Address.childValues": {
+              "CITY": "Miami",
+              "COUNTRY": "UNITED STATES",
+              "STATE": "Florida",
+              "ADDRESS1": "360 NW",
+              "PINCODE": "33150",
+              "ADDRESS2": "98th St",
+              "STATE_CODE": "US-FL",
+              "COUNTRY_CODE": "US"
+            },
+            "Expertise": ""
+          }
+        ]
+      },
+      {
+        "10000000001": [
+          {
+            "Middle_Name": "David",
+            "EmailID": "michaeljohnson@zylker.com",
+            "CreatedTime": "1740682258537",
+            "Employee_type.id": "858578000000039959",
+            "Date_of_birth": "05-Feb-1982",
+            "AddedTime": "27-Feb-2025 15:50:58",
+            "Photo": "https://people.zoho.com/api/viewEmployeePhoto?filename=example2",
+            "Marital_status": "Married",
+            "Gender": "Male",
+            "ModifiedBy": "adminUser",
+            "ApprovalStatus": "Approval Not Enabled",
+            "Department": "Management",
+            "LocationName.ID": "",
+            "tabularSections": {
+              "Education Details": [
+                {
+                  "Specialization": "Investment Management",
+                  "Degree": "Bachelors",
+                  "College": "Elmwood College",
+                  "Yearofgraduation": "",
+                  "tabular.ROWID": "858578000000277336"
+                }
+              ],
+              "Work experience": [
+                {}
+              ],
+              "Dependent Details": [
+                {}
+              ]
+            },
+            "AddedBy": "adminUser",
+            "Mobile.country_code": "",
+            "Tags": "",
+            "Reporting_To": "adminUser",
+            "Photo_downloadUrl": "https://people.zoho.com/api/viewEmployeePhoto?filename=8648452000000034003",
+            "Source_of_hire.id": "858578000000039979",
+            "total_experience.displayValue": "21 year(s) 2 month(s)",
+            "Citizenship": "UNITED STATES",
+            "Employeestatus": "Active",
+            "Role": "Manager",
+            "Experience": "21",
+            "Employee_type": "Permanent",
+            "AddedBy.ID": "858578000000275005",
+            "Social_Security_Number": "759-07-6153",
+            "Role.ID": "858578000000035639",
+            "LastName": "Johnson",
+            "EmployeeID": "S19",
+            "ZUID": "-1",
+            "Veteran_Status": "",
+            "Dateofexit": "",
+            "Permanent_Address": "",
+            "Other_Email": "",
+            "LocationName": "",
+            "Work_location": "FL_ADMIN_3",
+            "Present_Address": "360 NW,98th St,Miami,Florida,UNITED STATES",
+            "Nick_Name": "Mike",
+            "total_experience": "254",
+            "ModifiedTime": "1741282187519",
+            "Reporting_To.MailID": "admin@example.com",
+            "Zoho_ID": 10000000001,
+            "Designation.ID": "858578000000277166",
+            "Source_of_hire": "Web",
+            "Designation": "Administration",
+            "Ethnicity.id": "858578000000275555",
+            "Marital_status.id": "858578000000039987",
+            "FirstName": "Michael",
+            "AboutMe": "",
+            "Dateofjoining": "03-Jan-2004",
+            "Experience.displayValue": "21 year(s) 2 month(s)",
+            "Mobile": "239-221-8049",
+            "Extension": "4",
+            "ModifiedBy.ID": "858578000000275005",
+            "Ethnicity": "Two or more races",
+            "Reporting_To.ID": "858578000000275005",
+            "Work_phone": "727-555-4545",
+            "Employeestatus.type": 1,
+            "Department.ID": "858578000000277092",
+            "Present_Address.childValues": {
+              "CITY": "Miami",
+              "COUNTRY": "UNITED STATES",
+              "STATE": "Florida",
+              "ADDRESS1": "360 NW",
+              "PINCODE": "33150",
+              "ADDRESS2": "98th St",
+              "STATE_CODE": "US-FL",
+              "COUNTRY_CODE": "US"
+            },
+            "Expertise": ""
+          }
+        ]
+      }
+    ],
+    "message": "Data fetched successfully",
+    "uri": "/api/forms/employee/getRecords",
+    "status": 0
+  }
+}

@@ -18,18 +18,18 @@ type ZohoPeopleClient struct {
 	TokenSource oauth2.TokenSource
 }
 
-type ZohoAuthToken struct {
-	AccessToken  string
-	RefreshToken string
-	TokenType    string
-	ExpiresIn    int64
+type ZohoAuthData struct {
+	ClientID      string
+	ClientSecret  string
+	ClientCode    string
+	DomainAccount string
 }
 
 type Option func(client *ZohoPeopleClient)
 
 const (
 	baseUrl        = "https://people.zoho.com/people/api/forms"
-	accessTokenUrl = "https://accounts.zoho.%s/oauth/v2/token"
+	accessTokenUrl = "https://accounts.zoho.%s/oauth/v2/token" // #nosec
 
 	getDepartmentRecords    = "/department/getRecords"
 	getDepartmentByRecordId = "/department/getDataByID"
@@ -37,7 +37,7 @@ const (
 	getEmployeeByRecordId   = "/employee/getDataByID"
 )
 
-func New(ctx context.Context, zohoClientID, zohoSecretID, zohoCode, domainAccount string) (*ZohoPeopleClient, error) {
+func New(ctx context.Context, authData ZohoAuthData, authToken ...oauth2.TokenSource) (*ZohoPeopleClient, error) {
 	httpClient, err := uhttp.NewClient(ctx, uhttp.WithLogger(true, ctxzap.Extract(ctx)))
 	if err != nil {
 		return nil, err
@@ -52,7 +52,11 @@ func New(ctx context.Context, zohoClientID, zohoSecretID, zohoCode, domainAccoun
 		wrapper: cli,
 	}
 
-	client.TokenSource = getTokenSource(ctx, zohoClientID, zohoSecretID, zohoCode, domainAccount)
+	if authToken != nil {
+		client.TokenSource = authToken[0]
+	} else {
+		client.TokenSource = getTokenSource(ctx, authData.ClientID, authData.ClientSecret, authData.ClientCode, authData.DomainAccount)
+	}
 
 	return &client, nil
 }
@@ -62,7 +66,6 @@ func NewClient(tokenSource oauth2.TokenSource, httpClient ...*uhttp.BaseHttpClie
 	if httpClient != nil || len(httpClient) != 0 {
 		wrapper = httpClient[0]
 	}
-
 	return &ZohoPeopleClient{
 		wrapper:     wrapper,
 		TokenSource: tokenSource,
