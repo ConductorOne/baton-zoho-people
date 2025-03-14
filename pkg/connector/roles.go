@@ -3,6 +3,7 @@ package connector
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
@@ -17,34 +18,17 @@ type roleBuilder struct {
 	client       *client.ZohoPeopleClient
 }
 
+var zohoRoles = []string{"Admin", "Team Incharge", "Team member", "Manager", "Director"}
+
 func (o *roleBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 	return roleResourceType
 }
 
-func (o *roleBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (o *roleBuilder) List(_ context.Context, _ *v2.ResourceId, _ *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
 	var resources []*v2.Resource
 
-	bag, pageToken, err := getToken(pToken, userResourceType)
-	if err != nil {
-		return nil, "", nil, err
-	}
-	employees, nextPageToken, _, err := o.client.ListUsers(ctx, client.PageOptions{
-		PageSize:  pToken.Size,
-		PageToken: pageToken,
-	})
-
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	err = bag.Next(nextPageToken)
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	for _, employee := range employees {
-		employeeCopy := employee
-		roleResource, err := parseIntoRoleResource(&employeeCopy)
+	for _, zohoRole := range zohoRoles {
+		roleResource, err := parseIntoRoleResource(zohoRole)
 		if err != nil {
 			return nil, "", nil, err
 		}
@@ -52,12 +36,7 @@ func (o *roleBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagina
 		resources = append(resources, roleResource)
 	}
 
-	nextPageToken, err = bag.Marshal()
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	return resources, nextPageToken, nil, nil
+	return resources, "", nil, nil
 }
 
 func (o *roleBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
@@ -78,13 +57,9 @@ func (o *roleBuilder) Grants(_ context.Context, _ *v2.Resource, _ *pagination.To
 	return nil, "", nil, nil
 }
 
-func parseIntoRoleResource(employee *client.Employee) (*v2.Resource, error) {
-	roleID := employee.RoleID
-	roleName := employee.Role
-
+func parseIntoRoleResource(zohoRole string) (*v2.Resource, error) {
 	profile := map[string]interface{}{
-		"role_id":   roleID,
-		"role_name": roleName,
+		"role_name": zohoRole,
 	}
 
 	roleTraits := []resourceType.RoleTraitOption{
@@ -92,9 +67,9 @@ func parseIntoRoleResource(employee *client.Employee) (*v2.Resource, error) {
 	}
 
 	ret, err := resourceType.NewRoleResource(
-		roleName,
+		zohoRole,
 		roleResourceType,
-		roleID,
+		GetRoleID(zohoRole),
 		roleTraits,
 	)
 	if err != nil {
@@ -109,4 +84,8 @@ func newRoleBuilder(c *client.ZohoPeopleClient) *roleBuilder {
 		resourceType: roleResourceType,
 		client:       c,
 	}
+}
+
+func GetRoleID(roleName string) string {
+	return fmt.Sprintf("zoho-role_%s", strings.ToLower(strings.ReplaceAll(roleName, " ", "-")))
 }

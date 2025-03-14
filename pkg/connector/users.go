@@ -18,7 +18,7 @@ type userBuilder struct {
 	client       *client.ZohoPeopleClient
 }
 
-func (o *userBuilder) ResourceType(ctx context.Context) *v2.ResourceType {
+func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 	return userResourceType
 }
 
@@ -81,17 +81,18 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 	}
 
 	for _, employee := range employees {
-		if employee.Role != "" {
+		roleName := employee.Role
+		if roleName != "" {
 			roleResource := &v2.Resource{
 				Id: &v2.ResourceId{
 					ResourceType: roleResourceType.Id,
-					Resource:     employee.RoleID,
+					Resource:     GetRoleID(roleName),
 				},
 			}
 			employeeCopy := employee
 			userResource, _ := parseIntoUserResource(&employeeCopy, userID)
 			userGrant := grant.NewGrant(roleResource, "assigned", userResource, grant.WithAnnotation(&v2.V1Identifier{
-				Id: fmt.Sprintf("role-grant:%s:%s:%s", roleResource.Id.Resource, userID, "assigned"),
+				Id: fmt.Sprintf("role-grant:%s:%s:%s", GetRoleID(roleName), userID, "assigned"),
 			}))
 			grants = append(grants, userGrant)
 		}
