@@ -13,7 +13,10 @@ import (
 // By default, the number of objects returned per page is 100. The maximum number of object supported per page.
 // It can be adjusted by adding the 'per_page' parameter in the query string.
 
-const ItemsPerPage = 100
+const (
+	ItemsPerPage   = 100
+	accessTokenUrl = "https://accounts.zoho.%s/oauth/v2/token" // #nosec
+)
 
 type PageOptions struct {
 	PageSize  int    `url:"limit,omitempty"`
@@ -21,7 +24,7 @@ type PageOptions struct {
 }
 
 var (
-	TokenURL = map[string]string{
+	TokenURLMap = map[string]string{
 		"US": "com",
 		"AU": "com.au",
 		"EU": "eu",
@@ -91,7 +94,7 @@ func getTokenSource(
 		AuthStyle:    oauth2.AuthStyleInHeader,
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
-		TokenURL:     fmt.Sprintf(accessTokenUrl, TokenURL[domainAccount]),
+		TokenURL:     fmt.Sprintf(accessTokenUrl, TokenURLMap[domainAccount]),
 	}
-	return cfg.TokenSource(ctx)
+	return oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx))
 }
