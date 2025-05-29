@@ -28,9 +28,7 @@ type ZohoAuthData struct {
 type Option func(client *ZohoPeopleClient)
 
 const (
-	baseUrl        = "https://people.zoho.com/people/api/forms"
-	accessTokenUrl = "https://accounts.zoho.%s/oauth/v2/token" // #nosec
-
+	baseUrl                 = "https://people.zoho.com/people/api/forms"
 	getDepartmentRecords    = "/department/getRecords"
 	getDepartmentByRecordId = "/department/getDataByID"
 	getEmployeeRecords      = "/employee/getRecords"
@@ -51,7 +49,6 @@ func New(ctx context.Context, authData ZohoAuthData, authToken ...oauth2.TokenSo
 	client := ZohoPeopleClient{
 		wrapper: cli,
 	}
-
 	if authToken != nil {
 		client.TokenSource = authToken[0]
 	} else {
