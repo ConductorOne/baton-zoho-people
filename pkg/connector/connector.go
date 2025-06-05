@@ -52,13 +52,13 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, zohoClientID, zohoSecretID, zohoCode, domainAccount string) (*Connector, error) {
+func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, domainAccount string) (*Connector, error) {
 	l := ctxzap.Extract(ctx)
 
 	zohoPeopleClient, err := client.New(ctx, client.ZohoAuthData{
 		ClientID:      zohoClientID,
 		ClientSecret:  zohoSecretID,
-		ClientCode:    zohoCode,
+		ClientCode:    zohoRefreshToken,
 		DomainAccount: domainAccount,
 	})
 	if err != nil {
