@@ -16,8 +16,8 @@ var (
 		field.WithRequired(true),
 		field.WithDescription("Secret ID of the Self Client Application for Zoho."),
 	)
-	codeField = field.StringField(
-		"zoho-code",
+	refreshTokenField = field.StringField(
+		"zoho-refresh-token",
 		field.WithRequired(true),
 		field.WithDescription("The temporary authorization code to access Zoho APIs."),
 	)
@@ -30,7 +30,7 @@ var (
 	// ConfigurationFields defines the external configuration required for the
 	// connector to run. Note: these fields can be marked as optional or
 	// required.
-	ConfigurationFields = []field.SchemaField{clientIDField, secretIDField, codeField, domainAccount}
+	ConfigurationFields = []field.SchemaField{clientIDField, secretIDField, refreshTokenField, domainAccount}
 
 	// FieldRelationships defines relationships between the fields listed in
 	// ConfigurationFields that can be automatically validated. For example, a

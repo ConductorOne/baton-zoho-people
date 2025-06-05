@@ -40,8 +40,8 @@ func (d *Connector) Asset(ctx context.Context, asset *v2.AssetRef) (string, io.R
 // Metadata returns metadata about the connector.
 func (d *Connector) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 	return &v2.ConnectorMetadata{
-		DisplayName: "My Baton Connector",
-		Description: "The template implementation of a baton connector",
+		DisplayName: "Zoho people Connector",
+		Description: "Connector to sync and manage users and roles in Zoho people.",
 	}, nil
 }
 
@@ -52,13 +52,13 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, zohoClientID, zohoSecretID, zohoCode, domainAccount string) (*Connector, error) {
+func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, domainAccount string) (*Connector, error) {
 	l := ctxzap.Extract(ctx)
 
 	zohoPeopleClient, err := client.New(ctx, client.ZohoAuthData{
 		ClientID:      zohoClientID,
 		ClientSecret:  zohoSecretID,
-		ClientCode:    zohoCode,
+		ClientCode:    zohoRefreshToken,
 		DomainAccount: domainAccount,
 	})
 	if err != nil {

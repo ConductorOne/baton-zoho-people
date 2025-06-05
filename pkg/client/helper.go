@@ -80,21 +80,24 @@ func getTokenSource(
 	ctx context.Context,
 	clientId,
 	clientSecret,
-	clientCode,
+	refreshToken,
 	domainAccount string,
 ) oauth2.TokenSource {
 	cfg := clientcredentials.Config{
 		EndpointParams: url.Values{
 			"client_id":     []string{clientId},
 			"client_secret": []string{clientSecret},
-			"grant_type":    []string{"authorization_code"},
-			"redirect_uri":  []string{"https://www.zoho.com"},
-			"code":          []string{clientCode},
+			"grant_type":    []string{"refresh_token"},
+			"refresh_token": []string{refreshToken},
 		},
-		AuthStyle:    oauth2.AuthStyleInHeader,
+		AuthStyle:    oauth2.AuthStyleInParams,
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
 		TokenURL:     fmt.Sprintf(accessTokenUrl, TokenURLMap[domainAccount]),
 	}
-	return oauth2.ReuseTokenSource(nil, cfg.TokenSource(ctx))
+
+	token := &oauth2.Token{
+		RefreshToken: refreshToken,
+	}
+	return oauth2.ReuseTokenSource(token, cfg.TokenSource(ctx))
 }

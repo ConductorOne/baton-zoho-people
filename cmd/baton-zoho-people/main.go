@@ -51,10 +51,10 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 
 	zohoClientID := v.GetString(clientIDField.FieldName)
 	zohoSecretID := v.GetString(secretIDField.FieldName)
-	zohoCode := v.GetString(codeField.FieldName)
+	zohoRefreshToken := v.GetString(refreshTokenField.FieldName)
 	zohoDomainAccount := v.GetString(domainAccount.FieldName)
 
-	connectorBuilder, err := connectorSchema.New(ctx, zohoClientID, zohoSecretID, zohoCode, zohoDomainAccount)
+	connectorBuilder, err := connectorSchema.New(ctx, zohoClientID, zohoSecretID, zohoRefreshToken, zohoDomainAccount)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
 		return nil, err
