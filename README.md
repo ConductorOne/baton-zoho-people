@@ -1,6 +1,6 @@
 ![Baton Logo](./baton-logo.png)
 
-# `baton-zoho-people` [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-zoho-people.svg)](https://pkg.go.dev/github.com/conductorone/baton-zoho-people) ![main ci](https://github.com/conductorone/baton-zoho-people/actions/workflows/main.yaml/badge.svg)
+# `baton-zoho-people` [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-zoho-people.svg)](https://pkg.go.dev/github.com/conductorone/baton-zoho-people) ![ci](https://github.com/conductorone/baton-zoho-people/actions/workflows/ci.yaml/badge.svg)
 
 `baton-zoho-people` is a connector for built using the [Baton SDK](https://github.com/conductorone/baton-sdk).
 
