@@ -15,11 +15,13 @@ var (
 		"zoho-secret-id",
 		field.WithRequired(true),
 		field.WithDescription("Secret ID of the Self Client Application for Zoho."),
+		field.WithIsSecret(true),
 	)
 	refreshTokenField = field.StringField(
 		"zoho-refresh-token",
 		field.WithRequired(true),
 		field.WithDescription("The temporary authorization code to access Zoho APIs."),
+		field.WithIsSecret(true),
 	)
 	domainAccount = field.SelectField(
 		"domain-account",
