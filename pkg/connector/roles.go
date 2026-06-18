@@ -6,10 +6,8 @@ import (
 	"strings"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
-	"github.com/conductorone/baton-sdk/pkg/annotations"
-	"github.com/conductorone/baton-sdk/pkg/pagination"
 	"github.com/conductorone/baton-sdk/pkg/types/entitlement"
-	resourceType "github.com/conductorone/baton-sdk/pkg/types/resource"
+	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
 )
 
@@ -24,22 +22,22 @@ func (o *roleBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 	return roleResourceType
 }
 
-func (o *roleBuilder) List(_ context.Context, _ *v2.ResourceId, _ *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (o *roleBuilder) List(_ context.Context, _ *v2.ResourceId, _ rs.SyncOpAttrs) ([]*v2.Resource, *rs.SyncOpResults, error) {
 	var resources []*v2.Resource
 
 	for _, zohoRole := range zohoRoles {
 		roleResource, err := parseIntoRoleResource(zohoRole)
 		if err != nil {
-			return nil, "", nil, err
+			return nil, nil, err
 		}
 
 		resources = append(resources, roleResource)
 	}
 
-	return resources, "", nil, nil
+	return resources, nil, nil
 }
 
-func (o *roleBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+func (o *roleBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ rs.SyncOpAttrs) ([]*v2.Entitlement, *rs.SyncOpResults, error) {
 	var entitlements []*v2.Entitlement
 
 	assigmentOptions := []entitlement.EntitlementOption{
@@ -50,11 +48,11 @@ func (o *roleBuilder) Entitlements(_ context.Context, resource *v2.Resource, _ *
 
 	entitlements = append(entitlements, entitlement.NewPermissionEntitlement(resource, "assigned", assigmentOptions...))
 
-	return entitlements, "", nil, nil
+	return entitlements, nil, nil
 }
 
-func (o *roleBuilder) Grants(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
-	return nil, "", nil, nil
+func (o *roleBuilder) Grants(_ context.Context, _ *v2.Resource, _ rs.SyncOpAttrs) ([]*v2.Grant, *rs.SyncOpResults, error) {
+	return nil, nil, nil
 }
 
 func parseIntoRoleResource(zohoRole string) (*v2.Resource, error) {
@@ -62,11 +60,11 @@ func parseIntoRoleResource(zohoRole string) (*v2.Resource, error) {
 		"role_name": zohoRole,
 	}
 
-	roleTraits := []resourceType.RoleTraitOption{
-		resourceType.WithRoleProfile(profile),
+	roleTraits := []rs.RoleTraitOption{
+		rs.WithRoleProfile(profile),
 	}
 
-	ret, err := resourceType.NewRoleResource(
+	ret, err := rs.NewRoleResource(
 		zohoRole,
 		roleResourceType,
 		GetRoleID(zohoRole),

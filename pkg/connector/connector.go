@@ -6,8 +6,10 @@ import (
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
+	"github.com/conductorone/baton-sdk/pkg/cli"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
+	cfg "github.com/conductorone/baton-zoho-people/pkg/config"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -24,8 +26,8 @@ func (d *Connector) SetTokenSource(tokenSource oauth2.TokenSource) {
 }
 
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
-func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
-	return []connectorbuilder.ResourceSyncer{
+func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncerV2 {
+	return []connectorbuilder.ResourceSyncerV2{
 		newUserBuilder(d.client),
 		newRoleBuilder(d.client),
 	}
@@ -69,4 +71,13 @@ func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, doma
 	return &Connector{
 		client: zohoPeopleClient,
 	}, nil
+}
+
+// NewLambdaConnector satisfies cli.NewConnector for use with config.RunConnector.
+func NewLambdaConnector(ctx context.Context, ac *cfg.ZohoPeople, _ *cli.ConnectorOpts) (connectorbuilder.ConnectorBuilderV2, []connectorbuilder.Opt, error) {
+	cb, err := New(ctx, ac.ZohoClientId, ac.ZohoSecretId, ac.ZohoRefreshToken, ac.DomainAccount)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cb, nil, nil
 }
