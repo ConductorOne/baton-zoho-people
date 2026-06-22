@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
-	"github.com/conductorone/baton-sdk/pkg/pagination"
+	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
@@ -18,7 +18,7 @@ var (
 	domainAccount, _ = os.LookupEnv("ZOHO_PEOPLE_DOMAIN_ACCOUNT")
 	apiToken, _      = os.LookupEnv("ZOHO_PEOPLE_API_TOKEN")
 	parentResourceID = &v2.ResourceId{}
-	pToken           = &pagination.Token{Size: 50, Token: ""}
+	syncOpts         = rs.SyncOpAttrs{}
 )
 
 func initClient(t *testing.T) *client.ZohoPeopleClient {
@@ -50,7 +50,7 @@ func TestUserBuilderList(t *testing.T) {
 	c := initClient(t)
 
 	u := newUserBuilder(c)
-	res, _, _, err := u.List(ctx, parentResourceID, pToken)
+	res, _, err := u.List(ctx, parentResourceID, syncOpts)
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -63,7 +63,7 @@ func TestRoleBuilderList(t *testing.T) {
 
 	r := newRoleBuilder(c)
 
-	res, _, _, err := r.List(ctx, parentResourceID, pToken)
+	res, _, err := r.List(ctx, parentResourceID, syncOpts)
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 

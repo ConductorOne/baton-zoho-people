@@ -1,7 +1,7 @@
 package test
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -62,11 +62,11 @@ func NewTestClient(response *http.Response, err error) *client.ZohoPeopleClient 
 	return client.NewClient(oauth2.StaticTokenSource(&token), baseHttpClient)
 }
 
-func ReadFile(fileName string) string {
+func ReadFile(fileName string) (string, error) {
 	data, err := os.ReadFile("../../test/mockResponses/" + fileName)
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("test: reading mock response file %s: %w", fileName, err)
 	}
 
-	return string(data)
+	return string(data), nil
 }

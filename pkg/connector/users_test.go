@@ -23,10 +23,14 @@ var pageOptions = client.PageOptions{
 // https://www.zoho.com/people/api/forms-api/fetch-single-section.html
 func TestZohoPeopleClient_GetUsers(t *testing.T) {
 	// Create a mock response.
+	mockData, err := test.ReadFile("employeesMock.json")
+	if err != nil {
+		t.Fatal(err)
+	}
 	mockResponse := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     make(http.Header),
-		Body:       io.NopCloser(strings.NewReader(test.ReadFile("employeesMock.json"))),
+		Body:       io.NopCloser(strings.NewReader(mockData)),
 	}
 	mockResponse.Header.Set("Content-Type", "application/json")
 

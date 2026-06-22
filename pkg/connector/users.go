@@ -6,10 +6,8 @@ import (
 	"strconv"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
-	"github.com/conductorone/baton-sdk/pkg/annotations"
-	"github.com/conductorone/baton-sdk/pkg/pagination"
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
-	"github.com/conductorone/baton-sdk/pkg/types/resource"
+	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
 )
 
@@ -24,12 +22,14 @@ func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 
 // List returns all the users from the database as resource objects.
 // Users include a UserTrait because they are the 'shape' of a standard user.
-func (o *userBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+func (o *userBuilder) List(ctx context.Context, _ *v2.ResourceId, opts rs.SyncOpAttrs) ([]*v2.Resource, *rs.SyncOpResults, error) {
 	var resources []*v2.Resource
+
+	pToken := &opts.PageToken
 
 	bag, pageToken, err := getToken(pToken, userResourceType)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 	employees, nextPageToken, _, err := o.client.ListUsers(ctx, client.PageOptions{
 		PageSize:  pToken.Size,
@@ -37,39 +37,39 @@ func (o *userBuilder) List(ctx context.Context, _ *v2.ResourceId, pToken *pagina
 	})
 
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	err = bag.Next(nextPageToken)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	for _, employee := range employees {
 		employeeCopy := employee
 		userResource, err := parseIntoUserResource(&employeeCopy, "")
 		if err != nil {
-			return nil, "", nil, err
+			return nil, nil, err
 		}
 
 		resources = append(resources, userResource)
 	}
 
-	nextPageToken, err = bag.Marshal()
+	next, err := bag.Marshal()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
-	return resources, nextPageToken, nil, nil
+	return resources, &rs.SyncOpResults{NextPageToken: next}, nil
 }
 
 // Entitlements always returns an empty slice for users.
-func (o *userBuilder) Entitlements(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
-	return nil, "", nil, nil
+func (o *userBuilder) Entitlements(_ context.Context, _ *v2.Resource, _ rs.SyncOpAttrs) ([]*v2.Entitlement, *rs.SyncOpResults, error) {
+	return nil, nil, nil
 }
 
 // Grants always returns an empty slice for users since they don't have any entitlements.
-func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
+func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ rs.SyncOpAttrs) ([]*v2.Grant, *rs.SyncOpResults, error) {
 	var grants []*v2.Grant
 
 	var userID = res.Id.Resource
@@ -77,7 +77,7 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 	employees, _, _, err := o.client.GetEmployeeByID(ctx, userID)
 
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, err
 	}
 
 	for _, employee := range employees {
@@ -98,7 +98,7 @@ func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ *paginatio
 		}
 	}
 
-	return grants, "", nil, nil
+	return grants, nil, nil
 }
 
 func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, error) {
@@ -116,13 +116,13 @@ func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, 
 	if user.ZohoID != 0 {
 		userID = strconv.FormatInt(user.ZohoID, 10)
 	}
-	userTraits := []resource.UserTraitOption{
-		resource.WithUserProfile(profile),
-		resource.WithStatus(userStatus),
-		resource.WithUserLogin(displayName),
+	userTraits := []rs.UserTraitOption{
+		rs.WithUserProfile(profile),
+		rs.WithStatus(userStatus),
+		rs.WithUserLogin(displayName),
 	}
 
-	ret, err := resource.NewUserResource(
+	ret, err := rs.NewUserResource(
 		displayName,
 		userResourceType,
 		userID,
