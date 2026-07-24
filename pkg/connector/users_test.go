@@ -8,10 +8,13 @@ import (
 	"strings"
 	"testing"
 
+	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
 	"github.com/conductorone/baton-zoho-people/test"
 	"golang.org/x/oauth2"
+
+	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 )
 
 var pageOptions = client.PageOptions{
@@ -139,5 +142,92 @@ func TestZohoPeopleClient_GetUsers_RequestDetails(t *testing.T) {
 		if value := capturedRequest.Header.Get(key); value != expectedValue {
 			t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, value)
 		}
+	}
+}
+
+// singleEmployeeMock is a minimal GetEmployeeByID response body with a
+// non-empty Role, used to exercise the cross-type role-grant emission in
+// userBuilder.Grants.
+const singleEmployeeMock = `{
+	"response": {
+		"result": [
+			{
+				"EmployeeID": "S20",
+				"EmailID": "christopherbrown@zylker.com",
+				"FirstName": "Christopher",
+				"LastName": "Brown",
+				"Role": "Team Incharge",
+				"Zoho_ID": 100000000000
+			}
+		],
+		"message": "success",
+		"status": 200
+	}
+}`
+
+func newTestUserResource(t *testing.T, id string) *v2.Resource {
+	t.Helper()
+	return &v2.Resource{
+		Id: &v2.ResourceId{
+			ResourceType: userResourceType.Id,
+			Resource:     id,
+		},
+	}
+}
+
+// TestUserBuilder_Grants_SyncRolesTrue verifies that when the "role" resource
+// type is included in the sync filter (or no filter is set), Grants emits the
+// cross-type role-assignment grant sourced from the employee's Role field.
+func TestUserBuilder_Grants_SyncRolesTrue(t *testing.T) {
+	mockResponse := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     make(http.Header),
+		Body:       io.NopCloser(strings.NewReader(singleEmployeeMock)),
+	}
+	mockResponse.Header.Set("Content-Type", "application/json")
+
+	c := test.NewTestClient(mockResponse, nil)
+	u := newUserBuilder(c, true)
+
+	grants, _, err := u.Grants(context.Background(), newTestUserResource(t, "100000000000"), rs.SyncOpAttrs{})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(grants) != 1 {
+		t.Fatalf("expected 1 grant when syncRoles=true, got %d", len(grants))
+	}
+
+	gotRoleID := grants[0].Entitlement.Resource.Id.Resource
+	wantRoleID := GetRoleID("Team Incharge")
+	if gotRoleID != wantRoleID {
+		t.Errorf("expected grant against role %q, got %q", wantRoleID, gotRoleID)
+	}
+	if grants[0].Entitlement.Resource.Id.ResourceType != roleResourceType.Id {
+		t.Errorf("expected grant resource type %q, got %q", roleResourceType.Id, grants[0].Entitlement.Resource.Id.ResourceType)
+	}
+}
+
+// TestUserBuilder_Grants_SyncRolesFalse verifies that when the sync filter
+// explicitly excludes the "role" resource type, Grants emits no grants at
+// all - the connector must never reference a resource type it isn't syncing.
+func TestUserBuilder_Grants_SyncRolesFalse(t *testing.T) {
+	mockResponse := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     make(http.Header),
+		Body:       io.NopCloser(strings.NewReader(singleEmployeeMock)),
+	}
+	mockResponse.Header.Set("Content-Type", "application/json")
+
+	c := test.NewTestClient(mockResponse, nil)
+	u := newUserBuilder(c, false)
+
+	grants, _, err := u.Grants(context.Background(), newTestUserResource(t, "100000000000"), rs.SyncOpAttrs{})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(grants) != 0 {
+		t.Fatalf("expected 0 grants when syncRoles=false, got %d", len(grants))
 	}
 }

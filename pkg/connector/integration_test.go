@@ -49,7 +49,7 @@ func initClient(t *testing.T) *client.ZohoPeopleClient {
 func TestUserBuilderList(t *testing.T) {
 	c := initClient(t)
 
-	u := newUserBuilder(c)
+	u := newUserBuilder(c, true)
 	res, _, err := u.List(ctx, parentResourceID, syncOpts)
 	assert.Nil(t, err)
 	assert.NotNil(t, res)

@@ -14,6 +14,10 @@ import (
 type userBuilder struct {
 	resourceType *v2.ResourceType
 	client       *client.ZohoPeopleClient
+	// syncRoles gates the cross-type role-grant emission below: the "role"
+	// resource type must not appear in emitted grants when the sync filter
+	// excludes it.
+	syncRoles bool
 }
 
 func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
@@ -68,8 +72,20 @@ func (o *userBuilder) Entitlements(_ context.Context, _ *v2.Resource, _ rs.SyncO
 	return nil, nil, nil
 }
 
-// Grants always returns an empty slice for users since they don't have any entitlements.
+// Grants emits role-assignment grants for the user, as a cross-type
+// optimization: the Zoho "employee" API response already includes the user's
+// role, so the user builder emits grants against the role resource type
+// instead of requiring the role builder to make an additional call per user.
+//
+// This must not run when the "role" resource type is excluded from the
+// current sync filter - the connector should never emit grants referencing a
+// resource type it isn't syncing. Users have no entitlements of their own
+// (see Entitlements above), so skipping entirely in that case is correct.
 func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ rs.SyncOpAttrs) ([]*v2.Grant, *rs.SyncOpResults, error) {
+	if !o.syncRoles {
+		return nil, nil, nil
+	}
+
 	var grants []*v2.Grant
 
 	var userID = res.Id.Resource
@@ -135,9 +151,10 @@ func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, 
 	return ret, nil
 }
 
-func newUserBuilder(c *client.ZohoPeopleClient) *userBuilder {
+func newUserBuilder(c *client.ZohoPeopleClient, syncRoles bool) *userBuilder {
 	return &userBuilder{
 		resourceType: userResourceType,
 		client:       c,
+		syncRoles:    syncRoles,
 	}
 }

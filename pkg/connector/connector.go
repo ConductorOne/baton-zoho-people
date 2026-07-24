@@ -17,6 +17,12 @@ import (
 
 type Connector struct {
 	client *client.ZohoPeopleClient
+	// syncRoles indicates whether the "role" resource type is included in the
+	// current sync filter. The user builder emits role grants as a cross-type
+	// optimization (the employee API response already includes the user's
+	// role), so it must not emit grants for a resource type that isn't being
+	// synced.
+	syncRoles bool
 }
 
 type Option func(*Connector) error
@@ -28,7 +34,7 @@ func (d *Connector) SetTokenSource(tokenSource oauth2.TokenSource) {
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncerV2 {
 	return []connectorbuilder.ResourceSyncerV2{
-		newUserBuilder(d.client),
+		newUserBuilder(d.client, d.syncRoles),
 		newRoleBuilder(d.client),
 	}
 }
@@ -53,8 +59,10 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 	return nil, nil
 }
 
-// New returns a new instance of the connector.
-func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, domainAccount string) (*Connector, error) {
+// New returns a new instance of the connector. syncRoles controls whether the
+// user builder is allowed to emit grants against the "role" resource type; it
+// should be false when the caller's sync filter excludes "role".
+func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, domainAccount string, syncRoles bool) (*Connector, error) {
 	l := ctxzap.Extract(ctx)
 
 	zohoPeopleClient, err := client.New(ctx, client.ZohoAuthData{
@@ -69,13 +77,22 @@ func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, doma
 	}
 
 	return &Connector{
-		client: zohoPeopleClient,
+		client:    zohoPeopleClient,
+		syncRoles: syncRoles,
 	}, nil
 }
 
 // NewLambdaConnector satisfies cli.NewConnector for use with config.RunConnector.
-func NewLambdaConnector(ctx context.Context, ac *cfg.ZohoPeople, _ *cli.ConnectorOpts) (connectorbuilder.ConnectorBuilderV2, []connectorbuilder.Opt, error) {
-	cb, err := New(ctx, ac.ZohoClientId, ac.ZohoSecretId, ac.ZohoRefreshToken, ac.DomainAccount)
+func NewLambdaConnector(ctx context.Context, ac *cfg.ZohoPeople, opts *cli.ConnectorOpts) (connectorbuilder.ConnectorBuilderV2, []connectorbuilder.Opt, error) {
+	// opts is nil in some call paths (e.g. tests constructing the connector
+	// directly); default to syncing roles in that case, matching
+	// WillSyncResourceType's "no filter set" default.
+	syncRoles := true
+	if opts != nil {
+		syncRoles = opts.WillSyncResourceType(RoleResourceTypeID)
+	}
+
+	cb, err := New(ctx, ac.ZohoClientId, ac.ZohoSecretId, ac.ZohoRefreshToken, ac.DomainAccount, syncRoles)
 	if err != nil {
 		return nil, nil, err
 	}
