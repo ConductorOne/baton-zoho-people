@@ -16,13 +16,16 @@ import (
 type userBuilder struct {
 	resourceType *v2.ResourceType
 	client       *client.ZohoPeopleClient
-	// syncRoles reflects whether the "role" resource type is included in the
-	// current sync filter. ResourceType uses it to annotate the user resource
-	// type with SkipEntitlements (role synced, so Grants below still runs) or
-	// SkipEntitlementsAndGrants (role excluded, so the SDK skips Grants
-	// entirely - the connector must never emit a grant referencing a resource
-	// type it isn't syncing).
-	syncRoles bool
+	// skipRoleGrants reflects whether the "role" resource type has been
+	// explicitly excluded from the current sync filter. The zero value
+	// (false) is the correct default: role is synced normally, so
+	// ResourceType annotates the user resource type with SkipEntitlements
+	// (Grants below still runs, emitting the cross-type role-assignment
+	// grant). When true (role excluded from an explicit sync filter),
+	// ResourceType annotates with SkipEntitlementsAndGrants instead, so the
+	// SDK skips Grants entirely - the connector must never emit a grant
+	// referencing a resource type it isn't syncing.
+	skipRoleGrants bool
 }
 
 // ResourceType clones the package-level userResourceType and annotates it
@@ -40,10 +43,10 @@ func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
 	}
 
 	annos := annotations.Annotations(rt.Annotations)
-	if o.syncRoles {
-		annos.Append(&v2.SkipEntitlements{})
-	} else {
+	if o.skipRoleGrants {
 		annos.Append(&v2.SkipEntitlementsAndGrants{})
+	} else {
+		annos.Append(&v2.SkipEntitlements{})
 	}
 	rt.Annotations = annos
 
@@ -168,10 +171,10 @@ func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, 
 	return ret, nil
 }
 
-func newUserBuilder(c *client.ZohoPeopleClient, syncRoles bool) *userBuilder {
+func newUserBuilder(c *client.ZohoPeopleClient, skipRoleGrants bool) *userBuilder {
 	return &userBuilder{
-		resourceType: userResourceType,
-		client:       c,
-		syncRoles:    syncRoles,
+		resourceType:   userResourceType,
+		client:         c,
+		skipRoleGrants: skipRoleGrants,
 	}
 }

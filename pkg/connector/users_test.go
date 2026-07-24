@@ -176,10 +176,11 @@ func newTestUserResource(t *testing.T, id string) *v2.Resource {
 	}
 }
 
-// TestUserBuilder_Grants_SyncRolesTrue verifies that when the "role" resource
-// type is included in the sync filter (or no filter is set), Grants emits the
-// cross-type role-assignment grant sourced from the employee's Role field.
-func TestUserBuilder_Grants_SyncRolesTrue(t *testing.T) {
+// TestUserBuilder_Grants_RoleNotSkipped verifies that when the "role"
+// resource type is not excluded from the sync filter (skipRoleGrants=false,
+// the zero-value default, or no filter is set), Grants emits the cross-type
+// role-assignment grant sourced from the employee's Role field.
+func TestUserBuilder_Grants_RoleNotSkipped(t *testing.T) {
 	mockResponse := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     make(http.Header),
@@ -188,7 +189,7 @@ func TestUserBuilder_Grants_SyncRolesTrue(t *testing.T) {
 	mockResponse.Header.Set("Content-Type", "application/json")
 
 	c := test.NewTestClient(mockResponse, nil)
-	u := newUserBuilder(c, true)
+	u := newUserBuilder(c, false)
 
 	grants, _, err := u.Grants(context.Background(), newTestUserResource(t, "100000000000"), rs.SyncOpAttrs{})
 	if err != nil {
@@ -196,7 +197,7 @@ func TestUserBuilder_Grants_SyncRolesTrue(t *testing.T) {
 	}
 
 	if len(grants) != 1 {
-		t.Fatalf("expected 1 grant when syncRoles=true, got %d", len(grants))
+		t.Fatalf("expected 1 grant when skipRoleGrants=false, got %d", len(grants))
 	}
 
 	gotRoleID := grants[0].Entitlement.Resource.Id.Resource
@@ -210,31 +211,32 @@ func TestUserBuilder_Grants_SyncRolesTrue(t *testing.T) {
 }
 
 // TestUserBuilder_ResourceType_SkipAnnotations verifies that ResourceType
-// annotates the user resource type based on syncRoles instead of Grants
-// guarding internally: SkipEntitlements when the "role" resource type is
-// being synced (Grants must still run to emit the cross-type role-assignment
-// grant), SkipEntitlementsAndGrants when it isn't (the SDK must skip Grants
-// entirely - the connector should never emit a grant referencing a resource
-// type it isn't syncing). It also verifies the shared userResourceType
-// package var is never mutated by either call.
+// annotates the user resource type based on skipRoleGrants instead of Grants
+// guarding internally: SkipEntitlements when the "role" resource type is not
+// excluded from the sync filter (skipRoleGrants=false, the zero-value
+// default - Grants must still run to emit the cross-type role-assignment
+// grant), SkipEntitlementsAndGrants when it is excluded (skipRoleGrants=true
+// - the SDK must skip Grants entirely, since the connector should never emit
+// a grant referencing a resource type it isn't syncing). It also verifies
+// the shared userResourceType package var is never mutated by either call.
 func TestUserBuilder_ResourceType_SkipAnnotations(t *testing.T) {
 	c := &client.ZohoPeopleClient{}
 
-	syncRolesTrue := newUserBuilder(c, true)
-	rtTrue := syncRolesTrue.ResourceType(context.Background())
-	trueAnnos := annotations.Annotations(rtTrue.Annotations)
-	if !trueAnnos.Contains(&v2.SkipEntitlements{}) {
-		t.Error("expected syncRoles=true ResourceType to contain SkipEntitlements")
+	roleNotSkipped := newUserBuilder(c, false)
+	rtNotSkipped := roleNotSkipped.ResourceType(context.Background())
+	notSkippedAnnos := annotations.Annotations(rtNotSkipped.Annotations)
+	if !notSkippedAnnos.Contains(&v2.SkipEntitlements{}) {
+		t.Error("expected skipRoleGrants=false ResourceType to contain SkipEntitlements")
 	}
-	if trueAnnos.Contains(&v2.SkipEntitlementsAndGrants{}) {
-		t.Error("expected syncRoles=true ResourceType to NOT contain SkipEntitlementsAndGrants")
+	if notSkippedAnnos.Contains(&v2.SkipEntitlementsAndGrants{}) {
+		t.Error("expected skipRoleGrants=false ResourceType to NOT contain SkipEntitlementsAndGrants")
 	}
 
-	syncRolesFalse := newUserBuilder(c, false)
-	rtFalse := syncRolesFalse.ResourceType(context.Background())
-	falseAnnos := annotations.Annotations(rtFalse.Annotations)
-	if !falseAnnos.Contains(&v2.SkipEntitlementsAndGrants{}) {
-		t.Error("expected syncRoles=false ResourceType to contain SkipEntitlementsAndGrants")
+	roleSkipped := newUserBuilder(c, true)
+	rtSkipped := roleSkipped.ResourceType(context.Background())
+	skippedAnnos := annotations.Annotations(rtSkipped.Annotations)
+	if !skippedAnnos.Contains(&v2.SkipEntitlementsAndGrants{}) {
+		t.Error("expected skipRoleGrants=true ResourceType to contain SkipEntitlementsAndGrants")
 	}
 
 	if len(userResourceType.Annotations) != 0 {
