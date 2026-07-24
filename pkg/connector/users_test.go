@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
+	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
 	"github.com/conductorone/baton-zoho-people/test"
@@ -208,26 +209,35 @@ func TestUserBuilder_Grants_SyncRolesTrue(t *testing.T) {
 	}
 }
 
-// TestUserBuilder_Grants_SyncRolesFalse verifies that when the sync filter
-// explicitly excludes the "role" resource type, Grants emits no grants at
-// all - the connector must never reference a resource type it isn't syncing.
-func TestUserBuilder_Grants_SyncRolesFalse(t *testing.T) {
-	mockResponse := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     make(http.Header),
-		Body:       io.NopCloser(strings.NewReader(singleEmployeeMock)),
+// TestUserBuilder_ResourceType_SkipAnnotations verifies that ResourceType
+// annotates the user resource type based on syncRoles instead of Grants
+// guarding internally: SkipEntitlements when the "role" resource type is
+// being synced (Grants must still run to emit the cross-type role-assignment
+// grant), SkipEntitlementsAndGrants when it isn't (the SDK must skip Grants
+// entirely - the connector should never emit a grant referencing a resource
+// type it isn't syncing). It also verifies the shared userResourceType
+// package var is never mutated by either call.
+func TestUserBuilder_ResourceType_SkipAnnotations(t *testing.T) {
+	c := &client.ZohoPeopleClient{}
+
+	syncRolesTrue := newUserBuilder(c, true)
+	rtTrue := syncRolesTrue.ResourceType(context.Background())
+	trueAnnos := annotations.Annotations(rtTrue.Annotations)
+	if !trueAnnos.Contains(&v2.SkipEntitlements{}) {
+		t.Error("expected syncRoles=true ResourceType to contain SkipEntitlements")
 	}
-	mockResponse.Header.Set("Content-Type", "application/json")
-
-	c := test.NewTestClient(mockResponse, nil)
-	u := newUserBuilder(c, false)
-
-	grants, _, err := u.Grants(context.Background(), newTestUserResource(t, "100000000000"), rs.SyncOpAttrs{})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if trueAnnos.Contains(&v2.SkipEntitlementsAndGrants{}) {
+		t.Error("expected syncRoles=true ResourceType to NOT contain SkipEntitlementsAndGrants")
 	}
 
-	if len(grants) != 0 {
-		t.Fatalf("expected 0 grants when syncRoles=false, got %d", len(grants))
+	syncRolesFalse := newUserBuilder(c, false)
+	rtFalse := syncRolesFalse.ResourceType(context.Background())
+	falseAnnos := annotations.Annotations(rtFalse.Annotations)
+	if !falseAnnos.Contains(&v2.SkipEntitlementsAndGrants{}) {
+		t.Error("expected syncRoles=false ResourceType to contain SkipEntitlementsAndGrants")
+	}
+
+	if len(userResourceType.Annotations) != 0 {
+		t.Fatalf("expected shared userResourceType.Annotations to remain unmutated, got %d annotations", len(userResourceType.Annotations))
 	}
 }

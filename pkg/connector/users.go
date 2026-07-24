@@ -6,22 +6,48 @@ import (
 	"strconv"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
+	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
+	"google.golang.org/protobuf/proto"
 )
 
 type userBuilder struct {
 	resourceType *v2.ResourceType
 	client       *client.ZohoPeopleClient
-	// syncRoles gates the cross-type role-grant emission below: the "role"
-	// resource type must not appear in emitted grants when the sync filter
-	// excludes it.
+	// syncRoles reflects whether the "role" resource type is included in the
+	// current sync filter. ResourceType uses it to annotate the user resource
+	// type with SkipEntitlements (role synced, so Grants below still runs) or
+	// SkipEntitlementsAndGrants (role excluded, so the SDK skips Grants
+	// entirely - the connector must never emit a grant referencing a resource
+	// type it isn't syncing).
 	syncRoles bool
 }
 
+// ResourceType clones the package-level userResourceType and annotates it
+// with the appropriate skip marker based on whether the "role" resource type
+// is being synced: SkipEntitlements when it is (so Grants below can still
+// emit the cross-type role-assignment grant), or
+// SkipEntitlementsAndGrants when it isn't (so the connector never emits a
+// grant referencing a resource type it isn't syncing). The package-level
+// userResourceType is shared with parseIntoUserResource and getToken, so it
+// must never be mutated in place.
 func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
-	return userResourceType
+	rt, ok := proto.Clone(userResourceType).(*v2.ResourceType)
+	if !ok {
+		return userResourceType
+	}
+
+	annos := annotations.Annotations(rt.Annotations)
+	if o.syncRoles {
+		annos.Append(&v2.SkipEntitlements{})
+	} else {
+		annos.Append(&v2.SkipEntitlementsAndGrants{})
+	}
+	rt.Annotations = annos
+
+	return rt
 }
 
 // List returns all the users from the database as resource objects.
@@ -76,16 +102,7 @@ func (o *userBuilder) Entitlements(_ context.Context, _ *v2.Resource, _ rs.SyncO
 // optimization: the Zoho "employee" API response already includes the user's
 // role, so the user builder emits grants against the role resource type
 // instead of requiring the role builder to make an additional call per user.
-//
-// This must not run when the "role" resource type is excluded from the
-// current sync filter - the connector should never emit grants referencing a
-// resource type it isn't syncing. Users have no entitlements of their own
-// (see Entitlements above), so skipping entirely in that case is correct.
 func (o *userBuilder) Grants(ctx context.Context, res *v2.Resource, _ rs.SyncOpAttrs) ([]*v2.Grant, *rs.SyncOpResults, error) {
-	if !o.syncRoles {
-		return nil, nil, nil
-	}
-
 	var grants []*v2.Grant
 
 	var userID = res.Id.Resource
