@@ -117,8 +117,6 @@ func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, 
 		userID = strconv.FormatInt(user.ZohoID, 10)
 	}
 	userTraits := []rs.UserTraitOption{
-		rs.WithUserProfile(profile),
-		rs.WithStatus(userStatus),
 		rs.WithUserLogin(displayName),
 	}
 
@@ -127,6 +125,8 @@ func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, 
 		userResourceType,
 		userID,
 		userTraits,
+		rs.WithResourceProfile(profile),
+		rs.WithResourceStatus(v2.Status_ResourceStatus(userStatus), ""),
 	)
 	if err != nil {
 		return nil, err
