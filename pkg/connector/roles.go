@@ -60,15 +60,14 @@ func parseIntoRoleResource(zohoRole string) (*v2.Resource, error) {
 		"role_name": zohoRole,
 	}
 
-	roleTraits := []rs.RoleTraitOption{
-		rs.WithRoleProfile(profile),
-	}
+	roleTraits := []rs.RoleTraitOption{}
 
 	ret, err := rs.NewRoleResource(
 		zohoRole,
 		roleResourceType,
 		GetRoleID(zohoRole),
 		roleTraits,
+		rs.WithResourceProfile(profile),
 	)
 	if err != nil {
 		return nil, err
