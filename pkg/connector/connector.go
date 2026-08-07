@@ -17,6 +17,10 @@ import (
 
 type Connector struct {
 	client *client.ZohoPeopleClient
+	// skipRoleResourceType reports whether role is excluded from the sync
+	// filter. Named for the skip condition so the zero value is safe: main.go
+	// registers a zero-value Connector{} as the capabilities factory.
+	skipRoleResourceType bool
 }
 
 type Option func(*Connector) error
@@ -28,7 +32,7 @@ func (d *Connector) SetTokenSource(tokenSource oauth2.TokenSource) {
 // ResourceSyncers returns a ResourceSyncer for each resource type that should be synced from the upstream service.
 func (d *Connector) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncerV2 {
 	return []connectorbuilder.ResourceSyncerV2{
-		newUserBuilder(d.client),
+		newUserBuilder(d.client, d.skipRoleResourceType),
 		newRoleBuilder(d.client),
 	}
 }
@@ -54,7 +58,7 @@ func (d *Connector) Validate(ctx context.Context) (annotations.Annotations, erro
 }
 
 // New returns a new instance of the connector.
-func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, domainAccount string) (*Connector, error) {
+func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, domainAccount string, skipRoleResourceType bool) (*Connector, error) {
 	l := ctxzap.Extract(ctx)
 
 	zohoPeopleClient, err := client.New(ctx, client.ZohoAuthData{
@@ -69,13 +73,17 @@ func New(ctx context.Context, zohoClientID, zohoSecretID, zohoRefreshToken, doma
 	}
 
 	return &Connector{
-		client: zohoPeopleClient,
+		client:               zohoPeopleClient,
+		skipRoleResourceType: skipRoleResourceType,
 	}, nil
 }
 
 // NewLambdaConnector satisfies cli.NewConnector for use with config.RunConnector.
-func NewLambdaConnector(ctx context.Context, ac *cfg.ZohoPeople, _ *cli.ConnectorOpts) (connectorbuilder.ConnectorBuilderV2, []connectorbuilder.Opt, error) {
-	cb, err := New(ctx, ac.ZohoClientId, ac.ZohoSecretId, ac.ZohoRefreshToken, ac.DomainAccount)
+func NewLambdaConnector(ctx context.Context, ac *cfg.ZohoPeople, opts *cli.ConnectorOpts) (connectorbuilder.ConnectorBuilderV2, []connectorbuilder.Opt, error) {
+	// nil opts means no filter, so nothing is skipped.
+	skipRoleResourceType := opts != nil && !opts.WillSyncResourceType(RoleResourceTypeID)
+
+	cb, err := New(ctx, ac.ZohoClientId, ac.ZohoSecretId, ac.ZohoRefreshToken, ac.DomainAccount, skipRoleResourceType)
 	if err != nil {
 		return nil, nil, err
 	}
