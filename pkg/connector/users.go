@@ -6,9 +6,11 @@ import (
 	"strconv"
 
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
+	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/types/grant"
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 	"github.com/conductorone/baton-zoho-people/pkg/client"
+	"google.golang.org/protobuf/proto"
 )
 
 type userBuilder struct {
@@ -17,7 +19,7 @@ type userBuilder struct {
 }
 
 func (o *userBuilder) ResourceType(_ context.Context) *v2.ResourceType {
-	return userResourceType
+	return o.resourceType
 }
 
 // List returns all the users from the database as resource objects.
@@ -135,9 +137,21 @@ func parseIntoUserResource(user *client.Employee, zohoID string) (*v2.Resource, 
 	return ret, nil
 }
 
-func newUserBuilder(c *client.ZohoPeopleClient) *userBuilder {
+// newUserBuilder returns the user syncer. Users have no entitlements of their
+// own, and their only grants are cross-type role grants, so when role is
+// excluded from the sync the grants pass is skipped too.
+func newUserBuilder(c *client.ZohoPeopleClient, skipRoleResourceType bool) *userBuilder {
+	rt := proto.Clone(userResourceType).(*v2.ResourceType)
+	annos := annotations.Annotations(rt.GetAnnotations())
+	if skipRoleResourceType {
+		annos.Update(&v2.SkipEntitlementsAndGrants{})
+	} else {
+		annos.Update(&v2.SkipEntitlements{})
+	}
+	rt.Annotations = annos
+
 	return &userBuilder{
-		resourceType: userResourceType,
+		resourceType: rt,
 		client:       c,
 	}
 }
